@@ -15,23 +15,16 @@
 	<body>
 
 	
-		<div id="info">
-				<B>Grass Quads - WebGL(html5)</B><BR>
-				Move Mouse. Arrowkeys to move camera.<BR>
-				<P>Like a classic game effect/trick where you put quads like a *.<BR>
-				And then move the upper vertices like wind or/and like here with a light-effector.</P>
-				Done using <a href="https://github.com/mrdoob/three.js" target="_blank">three.js</a>.
-				<P><B>Note.</B> You need a modern browser that supports WebGL for this to run the way it is intended.<BR>
-				For example. <a href="http://www.google.com/landing/chrome/beta/" target="_blank">Google Chrome 9+</a> or <a href="http://www.mozilla.com/firefox/beta/" target="_blank">Firefox 4+</a>.<BR><BR>(If you are already using one of those browsers and it's still not running, it's possible that you<BR>have old blacklisted GPU drivers. Try updating the drivers for your graphic card.<BR>Or try to set a '--ignore-gpu-blacklist' switch for the browser.)</P>
-				<font color="#777777">(C) OutsideOfSociety 2013.
-		</div>
+	
 
 		<script src="../build_r52/three.min.js"></script>
-
 		<script type="text/javascript" src="../general/RequestAnimationFrame.js"></script>
 		<script type="text/javascript" src="../general/THREEx.WindowResize.js"></script>
 		<script type="text/javascript" src="../general/info.js"></script>
+		<script type="text/javascript" src="../general/OrbitControls.js"></script>
+		<script src="../general/stats.min.js"></script>
 
+		
 		<script type="x-shader/x-vertex" id="vertexshader">
 
 			attribute float time;
@@ -238,7 +231,7 @@
 				document.body.appendChild( container );
 
 				scene = new THREE.Scene();
-				scene.fog = new THREE.Fog( 0x000000, 150, 400 );
+				//scene.fog = new THREE.Fog( 0x000000, 150, 400 );
 				
 				camera = new THREE.PerspectiveCamera( 50, window.innerWidth / window.innerHeight, 1, 10000 );
 				camera.position.z = distance;
@@ -248,6 +241,7 @@
 				camera.lookAt(targetCamera);
 
 				scene.add( camera );
+				
 
 				try {
 					// renderer
@@ -265,8 +259,9 @@
 					document.getElementById('info').style.display = "block";
 					return;
 				}
-
 				
+				
+				//#region Skysphere
 				var bgGeometry = new THREE.SphereGeometry(340, 12, 12, 0, Math.PI+0.5, 0, Math.PI*0.5);
 				bgGeometry.applyMatrix( new THREE.Matrix4().setRotationFromEuler( new THREE.Vector3( 0, -Math.PI-0.25, 0 ) ) );
 				
@@ -276,26 +271,37 @@
 				bg.matrixAutoUpdate = false;
 				bg.updateMatrix();
 				scene.add(bg);
+				//#endregion
+
+				// #region Stats screen
+				stats = new Stats();
+				stats.setMode(0);
+
+				stats.domElement.style.position = 'absolute';
+				stats.domElement.style.left = '0px';
+				stats.domElement.style.top = '0px';
+				document.body.appendChild(stats.domElement);
+				//#endregion
 
 				// glow
 				sphere = new THREE.Object3D();
 				sphere.position.set( 0, 30, 0 );
-				scene.add(sphere);
+				//scene.add(sphere);
 
 				var glow = new THREE.Sprite( { map: THREE.ImageUtils.loadTexture( "bob.png" ), useScreenCoordinates: false, color: 0x999999, blending: THREE.NormalBlending } );
 				glow.scale.set( 0.4, 0.4, 0 );
-				sphere.add( glow );
+				//sphere.add( glow );
 
 				flare0 = new THREE.Sprite( { map: THREE.ImageUtils.loadTexture( "flare.png" ), useScreenCoordinates: false, color: 0xffffff, blending: THREE.AdditiveBlending } );
 				flare0.scale.set( 0.15, 0.15, 0 );
 				flare0.opacity = 0.3;
-				sphere.add( flare0 );
+				//sphere.add( flare0 );
 
 				flare1 = new THREE.Sprite( { map: THREE.ImageUtils.loadTexture( "flare.png" ), useScreenCoordinates: false, color: 0xffffff, blending: THREE.AdditiveBlending } );
 				flare1.scale.set( 0.12, 0.12, 0 );
 				flare1.opacity = 0.3;
 				flare1.rotation = Math.PI*0.5;
-				sphere.add( flare1 );
+				//sphere.add( flare1 );
 
 				
 				var planeGeometry = new THREE.PlaneGeometry(400, 30, 14, 1);
@@ -403,17 +409,8 @@
 				ground.updateMatrix();
 				scene.add(ground);
 
-				// weeds
-				var loader = new THREE.JSONLoader();
-				loader.load( "weeds01.js", weedLoaded );
-				loader.load( "weeds02.js", weedLoaded );
-
-			}
-
-			function weedLoaded( geometry ) {
-
-				geometry.computeVertexNormals();
-				geometry.computeFaceNormals();
+				 geometry.computeVertexNormals();
+				 geometry.computeFaceNormals();
 				
 				var attributes = {
 
@@ -442,16 +439,9 @@
 				var finalGeometry = new THREE.Geometry();
 				var weed = new THREE.Mesh( geometry );
 					
-				var posArray = [];
+				
 
-				for (var i = 0; i < 20; i++) {
-					var scale = 0.25+Math.random()*0.2;
-					weed.scale.set(scale,scale,scale);
-					weed.rotation.y = Math.random()*Math.PI;
-					weed.position.set( Math.random()*500-250, 0, Math.random()*300-175 );
-					THREE.GeometryUtils.merge(finalGeometry, weed);
-					posArray.push(weed.position);
-				}
+				
 
 				// colors
 				var values_colors = attributes.customColor.value;
@@ -475,7 +465,7 @@
 
 						p = finalGeometry.vertices[ vertexIndex ];
 
-						color = finalGeometry.materials[f.materialIndex].color;
+						//color = finalGeometry.materials[f.materialIndex].color;
 
 						values_colors[vertexIndex] = color;
 						values_basepos[vertexIndex] = posArray[posIndex];
@@ -553,6 +543,8 @@
 
 			function animate() {
 
+				stats.update();
+
 				requestAnimationFrame( animate );
 
 				render();
@@ -595,13 +587,6 @@
 					}
 
 				}
-
-				flare0.rotation += delta*0.0002;
-				flare1.rotation -= delta*0.00012;
-	
-				flare0.opacity = 0.2+Math.abs(Math.sin(time/1000))*0.2;
-				flare1.opacity = 0.2+Math.abs(Math.cos(time/1500))*0.2;
-
 
 				targetCamera.x += (-mouseXpercent*100 - targetCamera.x)/10;
 				targetCamera.y += (-(mouseYpercent*100)+40 - targetCamera.y)/10;
